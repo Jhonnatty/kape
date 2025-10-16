@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kapkap — Coffee Shop</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    /* =======================
+       Variables & Reset
+       ======================= */
+    :root{
+      --bg: #f8f5f2;
+      --card: #ffffff;
+      --muted: #4b4b4b;
+      --accent: #6b3e26;
+      --accent-2: #8b5a3c;
+      --glass: rgba(255,255,255,0.75);
+      --shadow: 0 12px 40px rgba(15,15,15,0.08);
+      --radius: 12px;
+      --maxw: 1200px;
+      --glass-border: rgba(0,0,0,0.04);
+    }
+    [data-theme="dark"]{
+      --bg:#0f1113; --card: rgba(255,255,255,0.02); --muted:#c9cbd1;
+      --accent:#f4d6b8; --accent-2:#e6b78a; --glass: rgba(255,255,255,0.03); --shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:var(--bg); color:var(--muted);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* ========== LOADER ========== */
+    .loader-wrap{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:9999;
+      transition:opacity .45s ease, visibility .45s ease;
+    }
+    .loader{
+      width:92px; height:92px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:var(--shadow); animation:spin 1.6s linear infinite;
+    }
+    .loader:after{content:''; width:66px; height:66px; border-radius:999px; background:var(--card); opacity:.12}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    .loader-hide{opacity:0; visibility:hidden; pointer-events:none}
+
+    /* ========== LAYOUT ========== */
+    .wrap{max-width:var(--maxw); margin:0 auto; padding:28px}
+    header{position:sticky; top:12px; z-index:80; display:flex; justify-content:center; padding:0 16px}
+    .nav{
+      width:100%; max-width:var(--maxw); display:flex; gap:16px; align-items:center; justify-content:space-between;
+      margin:auto; padding:12px 18px; border-radius:14px; background:linear-gradient(180deg,var(--glass), rgba(255,255,255,0.02));
+      box-shadow:var(--shadow); border:1px solid var(--glass-border); backdrop-filter: blur(6px);
+    }
+    .brand{display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit}
+    .logo{
+      width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:700; font-family:"Playfair Display",serif;
+      box-shadow:0 8px 22px rgba(0,0,0,0.12);
+    }
+    .brand h1{font-size:1rem; margin:0}
+    nav .links{display:flex; gap:12px; align-items:center}
+    .nav-link{
+      color:var(--muted); text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600; transition:all .18s;
+    }
+    .nav-link:hover{color:var(--accent)}
+    .nav-link.active{color:var(--accent); background:linear-gradient(90deg, rgba(107,62,38,0.06), rgba(139,90,60,0.03))}
+    .controls{display:flex; gap:8px; align-items:center}
+
+    .btn {
+      background:transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
+    .cta{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; padding:10px 18px; border-radius:999px; font-weight:700; cursor:pointer; border: none}
+
+    /* ========== HERO ========== */
+    .hero{
+      max-width:var(--maxw); margin:26px auto; border-radius:14px; padding:64px 32px; color:#fff;
+      background-image: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.02)),
+        url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80');
+      background-size:cover; background-position:center; box-shadow:var(--shadow); position:relative; overflow:hidden;
+    }
+    .eyebrow{font-weight:700; font-family:"Playfair Display",serif; color:rgba(255,255,255,0.95)}
+    .hero h1{font-family:"Playfair Display",serif; font-size:2.6rem; margin:12px 0; text-shadow:0 10px 30px rgba(0,0,0,0.45)}
+    .hero p{max-width:760px; margin:8px auto 18px; color:rgba(255,255,255,0.95)}
+    .hero-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+
+    /* ========== SECTIONS ========== */
+    section{max-width:var(--maxw); margin:44px auto; padding:0 18px}
+    h2.section-title{font-size:1.25rem; color:var(--accent); margin-bottom:10px}
+    p.lead{color:var(--muted); margin-bottom:18px}
+
+    /* ========== MENU GRID ========== */
+    .menu-grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+    .card{
+      background:var(--card); border-radius:12px; padding:14px; box-shadow:var(--shadow); transition:transform .28s ease, box-shadow .28s;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .card:hover{transform:translateY(-6px)}
+    .card img{width:100%; height:150px; object-fit:cover; border-radius:10px}
+    .card h3{margin:6px 0 0;color:var(--accent)}
+    .card p{color:var(--muted); font-size:.95rem}
+    .price{font-weight:700; color:var(--accent-2)}
+    .order-row{margin-top:auto; display:flex; gap:10px; align-items:center}
+    .small-btn{background:transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:8px; cursor:pointer}
+
+    /* hover effects */
+    img, .cta, .small-btn, .order-btn { transition:transform .18s ease, box-shadow .18s }
+    img:hover { transform:scale(1.02) }
+    .order-btn{background:var(--accent); color:#fff; border:none; padding:10px; border-radius:8px; cursor:pointer}
+    .order-btn:hover{background:var(--accent-2); transform:translateY(-2px)}
+
+    /* ========== CART SIDEBAR ========== */
+    .cart{
+      position:fixed; top:0; right:-420px; width:360px; height:100vh; background:var(--card); box-shadow:-8px 0 40px rgba(0,0,0,0.12);
+      padding:20px; transition: right .36s cubic-bezier(.22,.9,.2,1); z-index:120; overflow-y:auto; border-left:1px solid var(--glass-border);
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .cart.open{ right:12px }
+    .cart h2{ color:var(--accent) }
+    .cart-empty{ color:var(--muted); margin-top:12px }
+    .cart-item{ display:flex; justify-content:space-between; gap:8px; padding:10px 8px; align-items:center; border-radius:8px }
+    .cart-item .meta{ display:flex; flex-direction:column }
+    .qty-controls{display:flex; gap:6px; align-items:center}
+    .qty-btn{background:transparent; border:1px solid rgba(0,0,0,0.06); padding:6px 8px; border-radius:6px; cursor:pointer}
+    .cart-total{ margin-top:8px; font-weight:800; color:var(--accent-2); font-size:1.05rem }
+    .checkout-btn{ margin-top:auto; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:700 }
+
+    /* ========== CHECKOUT MODAL ========== */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:140 }
+    .modal.show{ display:flex }
+    .modal-box{ width:100%; max-width:420px; background:var(--card); padding:18px; border-radius:12px; box-shadow:var(--shadow) }
+    .modal-box label{ font-weight:600; display:block; margin-top:8px; color:var(--muted) }
+    .modal-box input, .modal-box textarea{ width:100%; padding:10px; margin-top:6px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; color:var(--muted) }
+
+    /* ========== LIGHTBOX (GALLERY) ========== */
+    .lightbox{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.75); z-index:150 }
+    .lightbox img{ max-width:92%; max-height:86%; border-radius:10px; box-shadow:0 20px 70px rgba(0,0,0,0.6) }
+
+    /* ========== SCROLL TO TOP ========== */
+    .to-top{ position:fixed; right:18px; bottom:18px; width:48px; height:48px; border-radius:10px; background:var(--card); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); cursor:pointer; transform:translateY(12px); opacity:0; transition:all .28s }
+    .to-top.show{ transform:translateY(0); opacity:1 }
+
+    /* ========== FOOTER ========== */
+    footer{ max-width:var(--maxw); margin:28px auto; padding:18px; border-radius:10px; background:var(--card); box-shadow:var(--shadow); display:flex; justify-content:space-between; align-items:center; gap:12px }
+    .socials{ display:flex; gap:10px; align-items:center }
+    .socials a{ text-decoration:none; color:var(--muted); border-radius:8px; padding:8px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,0.04) }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width:900px){
+      .cart.open{ right:6px; width:300px }
+      .brand h1{ font-size:.95rem }
+    }
+    @media (max-width:640px){
+      .nav .links{ display:none }
+      .hero{ padding:40px 18px }
+      .menu-grid{ gap:12px }
+      .card img{ height:140px }
+      .cart{ width:92%; right:-100%; }
+      .cart.open{ right:4% }
+    }
+
+    /* ========== REVEAL ======== */
+    .reveal{ opacity:0; transform:translateY(18px); transition: all .6s cubic-bezier(.17,.84,.44,1) }
+    .reveal.show{ opacity:1; transform:none }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div class="loader-wrap" id="loader" role="status" aria-hidden="false">
+    <div class="loader" aria-hidden="true"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- NAV -->
+    <header>
+      <div class="nav" role="navigation" aria-label="Main navigation">
+        <a class="brand" href="#home" aria-label="Kapkap Home">
+          <div class="logo">KP</div>
+          <div>
+            <h1>Kapkap</h1>
+            <div style="font-size:.78rem;color:var(--muted)">Coffee & Pastries</div>
+          </div>
+        </a>
+
+        <nav>
+          <div class="links" id="navLinks">
+            <a class="nav-link" href="#home">Home</a>
+            <a class="nav-link" href="#about">About</a>
+            <a class="nav-link" href="#menu">Menu</a>
+            <a class="nav-link" href="#gallery">Gallery</a>
+            <a class="nav-link" href="#contact">Contact</a>
+          </div>
+        </nav>
+
+        <div class="controls" aria-hidden="false">
+          <button class="btn" id="musicToggle" title="Toggle background music">♪</button>
+          <button class="btn" id="themeToggle" title="Toggle theme">🌙</button>
+          <button class="cta" id="cartToggle" aria-expanded="false">🛒 Order</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <main>
+      <section id="home" class="hero reveal" aria-labelledby="hero-title">
+        <div style="text-align:center">
+          <div class="eyebrow">Locally roasted • Handcrafted</div>
+          <h1 id="hero-title">Kapkap Coffee — Warm cups, warm hearts</h1>
+          <p class="lead">Savor thoughtfully-sourced coffee and freshly baked pastries. Cozy atmosphere, friendly service, daily smiles.</p>
+          <div class="hero-actions">
+            <button class="cta" onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth'})">Explore Menu</button>
+            <button class="btn" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">View Gallery</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="reveal" aria-labelledby="about-title">
+        <h2 class="section-title" id="about-title">About Us</h2>
+        <p class="lead">A neighborhood spot crafting specialty coffee, friendly service, and delicious baked goods.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center">
+          <div class="card" aria-hidden="false">
+            <img src="https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=900&q=80" alt="Shop interior">
+          </div>
+          <div class="card" style="display:flex;flex-direction:column;gap:8px">
+            <p><strong>Kapkap</strong> believes coffee should feel like home. We roast beans carefully, train baristas to craft consistent cups, and bake pastries daily.</p>
+            <ul style="margin-top:8px;color:var(--muted);list-style:none;padding-left:0">
+              <li>• Locally roasted beans</li>
+              <li>• Fresh pastries every morning</li>
+              <li>• Cozy seating and free Wi-Fi</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- MENU (with Order buttons) -->
+      <section id="menu" class="reveal" aria-labelledby="menu-title">
+        <h2 class="section-title" id="menu-title">Our Menu</h2>
+        <p class="lead">Classic favorites and seasonal specialties — prices in PHP.</p>
+
+        <div class="menu-grid" id="menuGrid">
+          <!-- Cards (each has an Order button) -->
+          <div class="card" data-name="Espresso" data-price="60">
+            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80" alt="Espresso">
+            <h3>Espresso</h3>
+            <p>Intense, concentrated coffee shot.</p>
+            <div class="order-row">
+              <div class="price">₱60</div>
+              <button class="order-btn" onclick="addToCart('Espresso',60)">Order</button>
+            </div>
+          </div>
+
+          <div class="card" data-name="Cappuccino" data-price="110">
+            <img src="https://i.pinimg.com/736x/09/1b/3e/091b3e2ca4abe3ee86d3b5126692af20.jpg" alt="Cappuccino">
+            <h3>Cappuccino</h3>
+            <p>Velvety microfoam and bold espresso.</p>
+            <div class="order-row">
+              <div class="price">₱110</div>
+              <button class="order-btn" onclick="addToCart('Cappuccino',110)">Order</button>
+            </div>
+          </div>
+
+          <div class="card" data-name="Iced Coffee" data-price="95">
+            <img src="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=900&q=80" alt="Iced Coffee">
+            <h3>Iced Coffee</h3>
+            <p>Refreshing cold-brewed goodness.</p>
+            <div class="order-row">
+              <div class="price">₱95</div>
+              <button class="order-btn" onclick="addToCart('Iced Coffee',95)">Order</button>
+            </div>
+          </div>
+
+          <div class="card" data-name="Latte" data-price="120">
+            <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=80" alt="Latte">
+            <h3>Latte</h3>
+            <p>Smooth steamed milk with espresso.</p>
+            <div class="order-row">
+              <div class="price">₱120</div>
+              <button class="order-btn" onclick="addToCart('Latte',120)">Order</button>
+            </div>
+          </div>
+
+          <div class="card" data-name="Croissant" data-price="80">
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80" alt="Croissant">
+            <h3>Croissant</h3>
+            <p>Buttery, flaky, freshly baked.</p>
+            <div class="order-row">
+              <div class="price">₱80</div>
+              <button class="order-btn" onclick="addToCart('Croissant',80)">Order</button>
+            </div>
+          </div>
+
+          <div class="card" data-name="Rosemary Focaccia" data-price="110">
+            <img src="https://i.pinimg.com/1200x/b9/65/ac/b965ace4420b4493a9e9e9d922dc2cd4.jpg" alt="Rosemary Focaccia">
+            <h3>Rosemary Focaccia</h3>
+            <p>Golden focaccia with rosemary & sea salt, served with herb olive oil.</p>
+            <div class="order-row">
+              <div class="price">₱110</div>
+              <button class="order-btn" onclick="addToCart('Rosemary Focaccia',110)">Order</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALLERY -->
+      <section id="gallery" class="reveal" aria-labelledby="gallery-title">
+        <h2 class="section-title" id="gallery-title">Gallery</h2>
+        <p class="lead">Photos from the shop and our menu.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <img data-large src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=900&q=80" alt="Coffee cup" style="width:100%;height:160px;object-fit:cover;border-radius:10px;cursor:pointer">
+          <img data-large src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80" alt="Barista" style="width:100%;height:160px;object-fit:cover;border-radius:10px;cursor:pointer">
+          <img data-large src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80" alt="Pastries" style="width:100%;height:160px;object-fit:cover;border-radius:10px;cursor:pointer">
+          <img data-large src="https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?auto=format&fit=crop&w=900&q=80" alt="Interior" style="width:100%;height:160px;object-fit:cover;border-radius:10px;cursor:pointer">
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="reveal" aria-labelledby="contact-title">
+        <h2 class="section-title" id="contact-title">Contact & Hire</h2>
+        <p class="lead">Have a question, catering request, or want to hire our team? Send a message below.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+          <div class="card" style="padding:18px">
+            <h3 style="color:var(--accent)">Visit Us</h3>
+            <p style="color:var(--muted)">123 Kapkap Lane, Mabini • Mon–Sun 7:00AM–8:00PM</p>
+            <h3 style="margin-top:12px;color:var(--accent)">Call</h3>
+            <p style="color:var(--muted)">+63 912 345 6789</p>
+            <h3 style="margin-top:12px;color:var(--accent)">Email</h3>
+            <p style="color:var(--muted)">hellokapkap@example.com</p>
+          </div>
+
+          <div class="card" style="padding:18px">
+            <form id="contactForm" novalidate>
+              <label for="cname">Name</label>
+              <input id="cname" name="name" required style="padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);width:100%;margin-top:6px">
+              <label for="cemail" style="margin-top:8px;display:block">Email</label>
+              <input id="cemail" name="email" type="email" required style="padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);width:100%;margin-top:6px">
+              <label for="cmessage" style="margin-top:8px;display:block">Message</label>
+              <textarea id="cmessage" name="message" rows="4" required style="padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);width:100%;margin-top:6px"></textarea>
+              <button type="submit" class="cta" style="margin-top:12px">Send Message</button>
+              <div id="contactSuccess" style="display:none;margin-top:12px;padding:10px;border-radius:8px;background:rgba(34,197,94,0.12);color:#166534;font-weight:600">✅ Message sent — we'll reply soon.</div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div>
+        <strong style="color:var(--accent)">Kapkap</strong>
+        <div style="font-size:.9rem;color:var(--muted)">Quality coffee • Local community</div>
+      </div>
+      <div class="socials" aria-label="Social media links">
+        <!-- Replace href="#" with your actual URLs -->
+        <a href="#" title="Facebook" aria-label="Facebook">f</a>
+        <a href="#" title="Instagram" aria-label="Instagram">ig</a>
+        <a href="mailto:hellokapkap@example.com" title="Email" aria-label="Email">✉️</a>
+      </div>
+    </footer>
+
+    <!-- CART (slides in) -->
+    <aside class="cart" id="cart" aria-hidden="true" aria-label="Shopping cart">
+      <button class="small-btn" style="align-self:flex-end" onclick="toggleCart()">Close ✖</button>
+      <h2>Your Order</h2>
+      <div id="cartItems" aria-live="polite"></div>
+      <div class="cart-total" id="cartTotal">Total: ₱0</div>
+      <button class="checkout-btn" onclick="openCheckout()">Checkout</button>
+    </aside>
+
+    <!-- CHECKOUT MODAL -->
+    <div class="modal" id="checkoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-box" role="document">
+        <h3 style="color:var(--accent)">Checkout</h3>
+        <label for="custName">Full name</label>
+        <input id="custName" placeholder="Jane Doe">
+        <label for="custPhone">Phone</label>
+        <input id="custPhone" placeholder="+63 912 345 6789">
+        <label for="custAddress">Address</label>
+        <textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="submit-order" onclick="placeOrder()">Place Order</button>
+          <button class="small-btn" onclick="closeCheckout()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+      <img id="lightboxImg" alt="Expanded photo">
+    </div>
+
+    <!-- SCROLL TO TOP -->
+    <button class="to-top" id="toTop" aria-label="Scroll to top">↑</button>
+  </div>
+
+  <!-- BACKGROUND MUSIC (change src to your file if desired) -->
+  <audio id="bgMusic" loop preload="auto">
+    <!-- Placeholder royalty-free music sample (replace if you want): -->
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3e5d3df8b8.mp3?filename=relaxing-cafe-ambience-10130.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    /* =============================
+       App: cart, UI, theme, music
+       ============================= */
+
+    // ---- Loader ----
+    window.addEventListener('load', () => {
+      setTimeout(()=> document.getElementById('loader').classList.add('loader-hide'), 700);
+    });
+
+    // ---- Theme toggle (persist) ----
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const storedTheme = localStorage.getItem('kapkap_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+    function applyTheme(t){ if(t==='dark') root.setAttribute('data-theme','dark'); else root.removeAttribute('data-theme'); themeToggle.textContent = t==='dark' ? '☀️' : '🌙'; }
+    applyTheme(storedTheme);
+    themeToggle.addEventListener('click', ()=> { const t = root.hasAttribute('data-theme') ? 'light' : 'dark'; applyTheme(t); localStorage.setItem('kapkap_theme', t); });
+
+    // ---- Background music toggle ----
+    const musicToggle = document.getElementById('musicToggle');
+    const bgMusic = document.getElementById('bgMusic');
+    const storedMusic = localStorage.getItem('kapkap_music') === 'on';
+    function applyMusic(on){
+      if(on){ bgMusic.play().catch(()=>{}); musicToggle.textContent = '🔈' }
+      else{ bgMusic.pause(); musicToggle.textContent = '♪' }
+      localStorage.setItem('kapkap_music', on ? 'on' : 'off');
+    }
+    applyMusic(storedMusic);
+    musicToggle.addEventListener('click', ()=> applyMusic(!bgMusic.paused));
+
+    // ---- Scroll reveal ----
+    const revealEls = document.querySelectorAll('.reveal');
+    const ro = new IntersectionObserver((entries) => {
+      entries.forEach(ent => { if(ent.isIntersecting) ent.target.classList.add('show'); });
+    }, {threshold: 0.12});
+    revealEls.forEach(el => ro.observe(el));
+
+    // ---- Active nav links highlight ----
+    const sections = document.querySelectorAll('main section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const navObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+        }
+      });
+    }, { rootMargin: '-30% 0px -40% 0px' });
+    sections.forEach(s => navObs.observe(s));
+
+    // ---- Scroll to top ----
+    const toTop = document.getElementById('toTop');
+    window.addEventListener('scroll', () => { if(window.scrollY > 420) toTop.classList.add('show'); else toTop.classList.remove('show'); });
+    toTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+    // ---- Gallery lightbox ----
+    document.querySelectorAll('[data-large]').forEach(img => {
+      img.addEventListener('click', () => {
+        const lb = document.getElementById('lightbox');
+        const lbImg = document.getElementById('lightboxImg');
+        lbImg.src = img.src;
+        lb.style.display = 'flex';
+        lb.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+    document.getElementById('lightbox').addEventListener('click', () => {
+      const lb = document.getElementById('lightbox');
+      lb.style.display = 'none';
+      lb.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      document.getElementById('lightboxImg').src = '';
+    });
+
+    // ---- Cart logic (front-end only) ----
+    let cart = [];
+    const cartEl = document.getElementById('cart');
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const cartToggleBtn = document.getElementById('cartToggle');
+
+    function renderCart(){
+      cartItemsEl.innerHTML = '';
+      if(cart.length === 0){
+        cartItemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+        cartTotalEl.textContent = 'Total: ₱0';
+        return;
+      }
+      let total = 0;
+      cart.forEach((it, idx) => {
+        total += it.price * it.qty;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cart-item';
+        wrapper.innerHTML = `
+          <div class="meta">
+            <strong>${it.name}</strong>
+            <div style="color:var(--muted);font-size:.95rem">₱${it.price} • x${it.qty}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;gap:6px">
+              <button class="qty-btn" onclick="decreaseQty(${idx})">–</button>
+              <button class="qty-btn" onclick="increaseQty(${idx})">+</button>
+            </div>
+            <button class="small-btn" style="margin-top:6px" onclick="removeItem(${idx})">Remove</button>
+          </div>
+        `;
+        cartItemsEl.appendChild(wrapper);
+      });
+      cartTotalEl.textContent = 'Total: ₱' + total;
+    }
+
+    function addToCart(name, price){
+      const existing = cart.find(i => i.name === name);
+      if(existing) existing.qty++;
+      else cart.push({ name, price, qty: 1 });
+      renderCart();
+      openCart(); // show cart when item added
+    }
+    function increaseQty(i){ cart[i].qty++; renderCart(); }
+    function decreaseQty(i){ if(cart[i].qty>1) cart[i].qty--; else removeItem(i); renderCart(); }
+    function removeItem(i){ cart.splice(i,1); renderCart(); }
+    function openCart(){ cartEl.classList.add('open'); cartEl.setAttribute('aria-hidden','false'); cartToggleBtn.setAttribute('aria-expanded','true'); }
+    function toggleCart(){ cartEl.classList.toggle('open'); cartEl.setAttribute('aria-hidden', cartEl.classList.contains('open') ? 'false' : 'true'); cartToggleBtn.setAttribute('aria-expanded', cartEl.classList.contains('open') ); }
+    cartToggleBtn.addEventListener('click', toggleCart);
+    window.toggleCart = toggleCart; // expose
+
+    // ---- Checkout modal ----
+    const checkoutModal = document.getElementById('checkoutModal');
+    function openCheckout(){
+      if(cart.length === 0){ alert('Your cart is empty!'); return; }
+      checkoutModal.classList.add('show');
+      checkoutModal.setAttribute('aria-hidden','false');
+    }
+    function closeCheckout(){ checkoutModal.classList.remove('show'); checkoutModal.setAttribute('aria-hidden','true'); }
+    function placeOrder(){
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const addr = document.getElementById('custAddress').value.trim();
+      if(!name || !phone || !addr){ alert('Please complete the checkout form.'); return; }
+      // Simulated order action
+      alert(`Thank you, ${name}! Your order has been placed. ☕`);
+      cart = []; renderCart(); closeCheckout(); toggleCart();
+    }
+    window.openCheckout = openCheckout;
+    window.placeOrder = placeOrder;
+    window.closeCheckout = closeCheckout;
+
+    // close modal by clicking outside
+    checkoutModal.addEventListener('click', (e) => { if(e.target === checkoutModal) closeCheckout(); });
+
+    // ---- Contact form behavior ----
+    const contactForm = document.getElementById('contactForm');
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cname').value.trim();
+      const email = document.getElementById('cemail').value.trim();
+      const message = document.getElementById('cmessage').value.trim();
+      if(!name || !email || !message){ alert('Please fill all fields.'); return; }
+      // show success
+      document.getElementById('contactSuccess').style.display = 'block';
+      contactForm.reset();
+      setTimeout(()=> document.getElementById('contactSuccess').style.display = 'none', 3500);
+    });
+
+    // ---- Initialize: render cart (empty) ----
+    renderCart();
+
+    // ---- Accessibility: show outlines on keyboard navigation ----
+    document.addEventListener('keydown', (e) => { if(e.key === 'Tab') document.body.classList.add('show-focus'); });
+
+    /* Notes for deployment:
+       - Replace social hrefs in the footer with your real URLs.
+       - Replace bg music src with your chosen audio file (or remove if not desired).
+       - This is a purely front-end demo (no backend). For real orders, integrate with an API/server.
+    */
+  </script>
+</body>
+</html>
